@@ -5,8 +5,6 @@ const nextConfig = {
       unoptimized: true,
       domains: ['images.unsplash.com'],
     },
-    basePath: process.env.NODE_ENV === 'production' ? '/tamirci3' : '',
-    assetPrefix: process.env.NODE_ENV === 'production' ? '/tamirci3/' : '',
     trailingSlash: true,
   };
   
