@@ -1,7 +1,6 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     reactStrictMode: true,
-    output: 'export', // Statik HTML çıktısı
     images: {
       unoptimized: true,
       domains: ['images.unsplash.com'],
