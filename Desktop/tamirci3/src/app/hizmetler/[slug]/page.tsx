@@ -1,4 +1,6 @@
-import { Metadata, ResolvingMetadata } from 'next';
+// app/[slug]/page.tsx
+import { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import ProblemList from '@/components/ProblemList';
 import ServiceHero from '@/components/ServiceHero';
 import ServiceFeatures from '@/components/ServiceFeatures';
@@ -66,43 +68,58 @@ const otherProblems = [
   { title: 'Diğer Arızalar', icon: '❓', description: 'Farklı veya nadir görülen arızalar.' }
 ];
 
-type Props = {
-  params: { slug: string }
-  searchParams: { [key: string]: string | string[] | undefined }
-}
-
-export async function generateMetadata(
-  { params }: Props,
-  parent: ResolvingMetadata
-): Promise<Metadata> {
+// Metadata tanımı
+export async function generateMetadata({ params }: { params: { slug: string } }): Promise<Metadata> {
   const service = services[params.slug as keyof typeof services];
+  const isOther = params.slug === 'digerleri';
+
+  if (!service && !isOther) {
+    return {
+      title: 'Sayfa Bulunamadı | Yılmaz Teknik',
+      description: 'Aradığınız hizmet sayfası bulunamadı.',
+    };
+  }
+
   return {
-    title: service ? service.title + ' | Yılmaz Teknik' : 'Hizmet Detayı | Yılmaz Teknik',
-    description: service ? `${service.title} - Yılmaz Teknik ile hızlı ve güvenilir servis.` : 'Beyaz eşya teknik servis detayları.'
+    title: service ? `${service.title} | Yılmaz Teknik` : 'Diğer Arızalar | Yılmaz Teknik',
+    description: service 
+      ? `${service.title} - Yılmaz Teknik ile hızlı ve güvenilir servis.` 
+      : 'Diğer ev aletleri ve genel arızalar için teknik servis hizmetleri.',
   };
 }
 
-export default async function ServicePage({ params }: Props) {
+// Statik sayfaları oluştur
+export async function generateStaticParams() {
+  return Object.keys(services).map((slug) => ({ slug }));
+}
+
+// Build davranışı
+export const dynamic = 'force-static';
+export const revalidate = 3600;
+
+export default function ServicePage({ params }: { params: { slug: string } }) {
   const service = services[params.slug as keyof typeof services];
-  const isOther = params.slug === 'digerleri' || !service;
+  const isOther = params.slug === 'digerleri';
+
+  if (!service && !isOther) {
+    notFound();
+  }
 
   return (
     <div className="min-h-screen">
-      {/* Hero Bölümü */}
-      <ServiceHero title={service?.title || ''} isOther={isOther} />
+      <ServiceHero title={service?.title || 'Diğer Arızalar'} isOther={isOther} />
 
-      {/* Sık Karşılaşılan Problemler */}
       <section className="relative py-16 bg-white">
         <div className="absolute inset-0 pointer-events-none z-0" aria-hidden>
           <div className="absolute inset-0 bg-gradient-to-br from-blue-500 via-fuchsia-500 to-yellow-400 opacity-40 mix-blend-multiply" />
         </div>
         <div className="container mx-auto px-4 relative z-10">
           <h2 className="text-3xl font-bold text-center mb-12">Sık Karşılaşılan Problemler</h2>
-          <ProblemList problems={isOther ? otherProblems : service.problems} />
+          <ProblemList problems={isOther ? otherProblems : service!.problems} />
         </div>
       </section>
 
       <ServiceFeatures features={service?.features || []} />
     </div>
   );
-} 
+}
